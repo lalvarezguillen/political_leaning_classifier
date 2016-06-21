@@ -72,32 +72,45 @@ def getTweetsFromHashtag(hashtag, leaning, since=(2015, 6, 1)):
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
         
-    for tweet in tweepy.Cursor(api.search, q="AmericaFirst").items():
+    tweets_generator = tweepy.Cursor(api.search, q=hashtag).items()
+    
+    while True:
         try:
-            tweet.text = removeUrls(tweet.text)
-            print(tweet.created_at)
-            if tweet.created_at > datetime.datetime(*since):
-                if isRelevantStatement(tweet.text):
-                    print(tweet.text.encode("utf-8"))
-                    storeStatement(tweet.text, leaning, "Default_author")
-            else: return
+            tweet = tweets_generator.next()
         except tweepy.TweepError:
-            time.sleep(60*15)
-            continue
-
+            print("Waiting for Twitter's time limit to expire...")
+            time.sleep(60*16)
+            tweet = tweets_generator.next()
+        
+        if tweet.created_at < datetime.datetime(*since): break
+        tweet.text = removeUrls(tweet.text)
+        if not isRelevantStatement(tweet.text): break
+        print(tweet.created_at)
+        print(tweet.text.encode("utf-8"))
+        storeStatement(tweet.text, leaning, "Default_author")
+        
+ 
 def getTweetsFrom(username, leaning, since=(2015, 6,1)):
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
 
-    for tweet in tweepy.Cursor(api.user_timeline, id=username).items():
+    tweets_generator = tweepy.Cursor(api.user_timeline, id=username).items()
+    
+    while True:
+        try:
+            tweet = tweets_generator.next()
+        except tweepy.TweepError:
+            print("Waiting for Twitter's time limit to expire...")
+            time.sleep(60*16)
+            tweet = tweets_generator.next()
+            
+        if tweet.created_at < datetime.datetime(*since): break
         tweet.text = removeUrls(tweet.text)
-        print tweet.created_at
-        if tweet.created_at > datetime.datetime(*since):
-            #Maybe check if it's not a retweet
-            if isRelevantStatement(tweet.text):
-                print(tweet.text.encode("utf-8"))
-                storeStatement(tweet.text, leaning, username)
-        else: return
+        if not isRelevantStatement(tweet.text): break
+        print(tweet.created_at)
+        print(tweet.text.encode("utf-8"))
+        storeStatement(tweet.text, leaning, username)
+        
     
 
 
