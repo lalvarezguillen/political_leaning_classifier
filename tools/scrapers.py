@@ -7,7 +7,9 @@ import project_credentials
 from database_stuff import storeStatement
 
 """ Facebook stuff """
-fb = GraphAPI(project_credentials.fb_token)
+fb = GraphAPI(
+    project_credentials.decodeCredentials(project_credentials.fb_token)
+)
 
 def getFbPostsFrom(username, leaning, since=(2015, 6, 1)):
     if leaning not in ["left", "right"]:
@@ -55,13 +57,14 @@ def searchFbPostsByHashtag(hashtag, leaning, since=(2015, 6, 1)):
 
 """ Twitter stuff """
 auth = tweepy.OAuthHandler(
-    project_credentials.twitter_consumer_key,
-    project_credentials.twitter_consumer_secret
+    project_credentials.decodeCredentials(project_credentials.twitter_consumer_key),
+    project_credentials.decodeCredentials(project_credentials.twitter_consumer_secret)
 )
 
 auth.set_access_token(
-    project_credentials.twitter_access_token,
-    project_credentials.twitter_access_token_secret)
+    project_credentials.decodeCredentials(project_credentials.twitter_access_token),
+    project_credentials.decodeCredentials(project_credentials.twitter_access_token_secret)
+)
 
 api = tweepy.API(auth)
 
