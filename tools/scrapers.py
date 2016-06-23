@@ -4,14 +4,15 @@ import re
 from facepy import GraphAPI
 import tweepy
 import project_credentials
-from database_stuff import storeStatement
+from database_stuff import storeStatement, db
 
 """ Facebook stuff """
 fb = GraphAPI(
-    project_credentials.decodeCredentials(project_credentials.fb_token)
+    project_credentials.fb_token
 )
 
 def getFbPostsFrom(username, leaning, since=(2015, 6, 1)):
+    """ Saves in DB Facebook posts from a given user, next to its political leaning """
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
 
@@ -23,6 +24,7 @@ def getFbPostsFrom(username, leaning, since=(2015, 6, 1)):
         page = True,
         since = since_unix_time
     )
+    print(result_pages.next())
 
     for page in result_pages:
         for post in page["data"]:
@@ -31,8 +33,10 @@ def getFbPostsFrom(username, leaning, since=(2015, 6, 1)):
                 if isRelevantStatement(statement):
                     print(statement.encode("utf-8"))
                     storeStatement(statement, leaning, username)
+      
                     
 def searchFbPostsByHashtag(hashtag, leaning, since=(2015, 6, 1)):
+    """ It appears searching posts is deprecated, we may have to give up on this one """
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
         
@@ -53,64 +57,61 @@ def searchFbPostsByHashtag(hashtag, leaning, since=(2015, 6, 1)):
                 if isRelevantStatement(statement):
                     print(statement.encode("utf-8"))
                     storeStatement(statement, leaning, "Default_author")
+
                     
 
 """ Twitter stuff """
 auth = tweepy.OAuthHandler(
-    project_credentials.decodeCredentials(project_credentials.twitter_consumer_key),
-    project_credentials.decodeCredentials(project_credentials.twitter_consumer_secret)
+    project_credentials.twitter_consumer_key,
+    project_credentials.twitter_consumer_secret
 )
 
 auth.set_access_token(
-    project_credentials.decodeCredentials(project_credentials.twitter_access_token),
-    project_credentials.decodeCredentials(project_credentials.twitter_access_token_secret)
+    project_credentials.twitter_access_token,
+    project_credentials.twitter_access_token_secret
 )
 
 api = tweepy.API(auth)
 
 def getTweetsFromHashtag(hashtag, leaning, since=(2015, 6, 1)):
+    """ Searches tweets by hashtag, and stores them in DB, next to its political leaning """
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
-        
-    tweets_generator = tweepy.Cursor(api.search, q=hashtag).items()
     
-    while True:
-        try:
-            tweet = tweets_generator.next()
-        except tweepy.TweepError:
-            print("Waiting for Twitter's time limit to expire...")
-            time.sleep(60*16)
-            tweet = tweets_generator.next()
-        
-        if tweet.created_at < datetime.datetime(*since): break
-        tweet.text = removeUrls(tweet.text)
-        if not isRelevantStatement(tweet.text): break
+    for tweet in limitHandled(tweepy.Cursor(api.search, q=hashtag).items()):
+        if tweet.created_at < datetime.datetime(*since): break #If we reached the "since" date, just break
+        if isRetweet(tweet): tweet.text = tweet.retweeted_status.text #If it's a retweet, access the original tweet
+        tweet.text = removeUrls(tweet.text) #URLs shouldn't influence the classification decision
+        #If the tweets are too short, or already in DB, disregard them
+        if not isRelevantStatement(tweet.text) or isAlreadyInDb(tweet.text): continue
         print(tweet.created_at)
         print(tweet.text.encode("utf-8"))
+        #Otherwise, store the tweet in DB
         storeStatement(tweet.text, leaning, "Default_author")
         
  
 def getTweetsFrom(username, leaning, since=(2015, 6,1)):
+    """ Gets a given user's tweets, and stores them in DB, next to its political leaning """
     if leaning not in ["left", "right"]:
         raise Exception("Not a valid political leaning")
-
-    tweets_generator = tweepy.Cursor(api.user_timeline, id=username).items()
-    
-    while True:
-        try:
-            tweet = tweets_generator.next()
-        except tweepy.TweepError:
-            print("Waiting for Twitter's time limit to expire...")
-            time.sleep(60*16)
-            tweet = tweets_generator.next()
-            
+        
+    for tweet in limitHandled(tweepy.Cursor(api.user_timeline, id=username).items()):
         if tweet.created_at < datetime.datetime(*since): break
         tweet.text = removeUrls(tweet.text)
-        if not isRelevantStatement(tweet.text): break
+        if not isRelevantStatement(tweet.text): continue
         print(tweet.created_at)
         print(tweet.text.encode("utf-8"))
         storeStatement(tweet.text, leaning, username)
         
+        
+def limitHandled(cursor):
+    """ Wraps a tweepy cursor with an iterator that handles rate limits """
+    while True:
+        try:
+            yield cursor.next()
+        except tweepy.TweepError:
+            print("Waiting for Twitter's time limit to expire...")
+            time.sleep(20 * 60)
     
 
 
@@ -128,3 +129,12 @@ def removeUrls(statement):
 
 def isRelevantStatement(statement, min_len = 60):
     return len(statement) > min_len
+    
+def isRetweet(tweet):
+    if hasattr(tweet, "retweet_status"):
+        return True
+        
+def isAlreadyInDb(statement):
+    c = db.execute("SELECT * FROM statements WHERE statement = ?", (statement, ))
+    if c.fetchone():
+        return True
