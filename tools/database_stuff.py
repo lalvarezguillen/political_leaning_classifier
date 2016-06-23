@@ -1,6 +1,10 @@
 import sqlite3
+try:
+    from .. import config
+except:
+    import config
 
-db = sqlite3.connect("dataset.db")
+db = sqlite3.connect(classifier_config.db_path)
 
 def structureDB():
     db.execute("CREATE TABLE statements(statement, leaning, username)")
