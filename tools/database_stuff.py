@@ -1,8 +1,8 @@
 import sqlite3
 try:
-    from .. import config
+    from .. import classifier_config
 except:
-    import config
+    import classifier_config
 
 db = sqlite3.connect(classifier_config.db_path)
 
