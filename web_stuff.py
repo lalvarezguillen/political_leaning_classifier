@@ -7,10 +7,6 @@ app = Flask(__name__)
 
 @app.route('/predict', methods = ['POST'])
 def handle_input():
-    """{
-        "url":"", #try to obtain text content of the tweet/post,
-        "statement": "Venezuelans go back home"
-    }"""
     if "url" in request:
         if "facebook.com" in request["url"]:
             #Obtain the post
