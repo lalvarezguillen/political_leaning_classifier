@@ -9,7 +9,7 @@
         <title></title>
     </head>
     <body>
-        <div id="container" style="width:600px; height:400px">
+        <div id="container" style="width:600px; position:absolute">
             <div id="chart_container" style="width:600px; height:350px">
                 <canvas id="leaning_chart"></canvas>
             </div>
@@ -35,6 +35,8 @@
                 }
             });
             $("#predict").on("click", predict);
+            $(window).on("load", keepCentered);
+            $(window).on("resize", keepCentered);
 
             function predict(){
                 statement = $("#statement textarea")[0].value;
@@ -66,6 +68,18 @@
 
             function handleError(response=""){
 
+            }
+            function keepCentered(){
+                var container_height = parseInt($("#container").css("height").replace("px", ""));
+                var container_width = parseInt($("#container").css("width").replace("px", ""));
+                $("#container").css(
+                    "top",
+                    (window.innerHeight-container_height)/2    
+                );
+                $("#container").css(
+                    "left",
+                    (window.innerWidth - container_width)/2
+                );
             }
         </script>
     </body>

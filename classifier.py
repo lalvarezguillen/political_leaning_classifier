@@ -9,6 +9,7 @@ import datetime
 import random
 
 def generateBalancedDataset():
+    """ slices the dataset, to obtain a balanced dataset """
     right = []
     left = []
     for entry in db.execute("SELECT * from statements"):
@@ -64,6 +65,16 @@ def storeClassifier(model):
         "pickled_classifiers/classifier_{}.pkl".format(datetime.date.today()),
         compress = 3
     )
+    
+def show_most_informative_features(n=30):
+    """Shows the most informative features, separated by target class"""
+    vectorizer = classif_pipe.named_steps["vect"],
+    clf = classif_pipe.named_steps["clf"]
+    feature_names = vectorizer.get_feature_names()
+    coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
+    top = zip(coefs_with_fns[:n], coefs_with_fns[:-(n + 1):-1])
+    for (coef_1, fn_1), (coef_2, fn_2) in top:
+        print "\t%.4f\t%-15s\t\t%.4f\t%-15s" % (coef_1, fn_1, coef_2, fn_2)
 
 
 if classifier_config.pickled_classifier: #If we're using a stored classifier
@@ -71,7 +82,3 @@ if classifier_config.pickled_classifier: #If we're using a stored classifier
 else: #If we're creating/using a new classifier
     classif_pipe = trainClassifier()
     
-#TODO: Create some code to benchmark the classifier's precision
-#And store the precision info as classifier's metada, for later usage
-
-#That's probably gonna require some code to create training and testing data
