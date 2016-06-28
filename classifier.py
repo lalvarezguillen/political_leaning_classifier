@@ -7,6 +7,9 @@ import classifier_config
 import os
 import datetime
 import random
+import re
+
+__codename__ = "PyBernie"
 
 def generateBalancedDataset():
     """ slices the dataset, to obtain a balanced dataset """
@@ -26,12 +29,16 @@ def generateBalancedDataset():
         [e[0] for e in data],
         [e[1] for e in data]
         )
+        
+def removeNumbers(document):
+    """ preprocessor that removes digits from the statements """
+    return re.sub("[0-9]+", "", document)
     
 def trainClassifier():
     """ Trains a classifier with the current dataset """
     classif_pipe = Pipeline([
-        ("vect", TfidfVectorizer(analyzer="word", ngram_range=(1,3), stop_words="english", max_df=0.7, min_df=5 )),
-        ("clf", MultinomialNB())
+        ("vect", TfidfVectorizer(analyzer="word", ngram_range=(1,3), stop_words="english", max_df=0.70, min_df=3, preprocessor=removeNumbers )),
+        ("clf", MultinomialNB(alpha=0.1))
     ])
     
     print("Generating training and testing data....")
@@ -68,7 +75,7 @@ def storeClassifier(model):
     
 def show_most_informative_features(n=30):
     """Shows the most informative features, separated by target class"""
-    vectorizer = classif_pipe.named_steps["vect"],
+    vectorizer = classif_pipe.named_steps["vect"]
     clf = classif_pipe.named_steps["clf"]
     feature_names = vectorizer.get_feature_names()
     coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
