@@ -6,7 +6,7 @@
         <script src="https://code.jquery.com/jquery-2.2.4.min.js" charset="utf-8"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" charset="utf-8"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" media="screen" title="no title" charset="utf-8">
-        <title></title>
+        <title>PyBernie</title>
     </head>
     <body>
         <div id="container" style="width:600px; position:absolute">
@@ -14,7 +14,8 @@
                 <canvas id="leaning_chart"></canvas>
             </div>
             <div id="statement" style="text-align:center">
-                <textarea rows="4" cols="60" style="margin-bottom:40px"></textarea>
+                <textarea rows="4" cols="60" style="margin-bottom:40px">
+                </textarea>
                 <br>
                 <input class="btn btn-default" id="predict" type="button" value="Predict political leaning">
             </div>
@@ -37,6 +38,8 @@
             $("#predict").on("click", predict);
             $(window).on("load", keepCentered);
             $(window).on("resize", keepCentered);
+            $("textarea").val("This app passes a political statement to a trained machine learning model in the backend, to attempt to predict its political leaning. You can introduce the statement in this form, and hit the button below.");
+            $("textarea").on("focus", function(event){event.target.value = ""});
 
             function predict(){
                 statement = $("#statement textarea")[0].value;

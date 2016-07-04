@@ -12,5 +12,5 @@ db_path = os.path.join(
 
 
 #Some network config
-app_port = 80
+app_port = 8080
 app_host = "0.0.0.0"
