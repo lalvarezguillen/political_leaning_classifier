@@ -8,7 +8,6 @@ app = Flask(__name__)
 @app.route("/")
 def hello():
     return render_template("predict.html")
-    #return "Hello!"
 
 @app.route('/predict', methods = ['POST'])
 def handle_input():
