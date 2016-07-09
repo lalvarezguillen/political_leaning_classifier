@@ -118,6 +118,17 @@ def trainClassifier():
     return classif_pipe
 
 
+def predictListOfStatements(pipe, statements):
+    """ Predicts the political leaning of a group of statements """
+    predictions = pipe.predict_proba(statements)
+    left = sum([x[0] for x in predictions])/len(predictions)
+    right = sum([x[1] for x in predictions])/len(predictions)
+    return {
+        "left": left,
+        "right": right
+    }
+
+
 def storeClassifier(model):
     """ Stores the trained classifier in hard drive, to make it available for later use """
     if not os.path.isdir("pickled_classifiers"):
