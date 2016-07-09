@@ -64,7 +64,6 @@ def trainNeuralNetwork():
 
     labels = v_labels
 
-
     """ Build the dataset """
     print("building the dataset...")
     ds = ClassificationDataSet(
