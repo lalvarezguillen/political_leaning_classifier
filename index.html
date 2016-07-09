@@ -1,1 +1,89 @@
-PyBernie?
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.min.js" charset="utf-8"></script>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" charset="utf-8"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" charset="utf-8"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" media="screen" title="no title" charset="utf-8">
+        <title>PyBernie</title>
+    </head>
+    <body>
+        <div id="container" style="width:600px; position:absolute">
+            <div id="chart_container" style="width:600px; height:350px">
+                <canvas id="leaning_chart"></canvas>
+            </div>
+            <div id="statement" style="text-align:center">
+                <textarea rows="4" cols="60" style="margin-bottom:40px">
+                </textarea>
+                <br>
+                <input class="btn btn-default" id="predict" type="button" value="Predict political leaning">
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var ctx = document.getElementById("leaning_chart");
+            var leaning_chart = new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: ["Democrat", "Republican"],
+                    datasets: [
+                        {
+                            data:[0.5, 0.5],
+                            backgroundColor:["#0D2E7F", "#FF0000"]
+                        }
+                    ]
+                }
+            });
+            $("#predict").on("click", predict);
+            $(window).on("load", keepCentered);
+            $(window).on("resize", keepCentered);
+            $("textarea").val("This app passes a political statement to a trained machine learning model in the backend, to attempt to predict its political leaning. You can introduce the statement in this form, and hit the button below.");
+            $("textarea").on("focus", function(event){event.target.value = ""});
+
+            function predict(){
+                statement = $("#statement textarea")[0].value;
+                console.log("Predicting this: " + statement);
+                $.ajax({
+                    url:"http://pybernie.rmotr.com:8080/",
+                    type: "POST",
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        statement: statement
+                        })
+                }).success(function(response){
+                    updateGraph(response);
+                })
+            }
+
+            function updateGraph(response){
+                console.log("Updating the graph");
+                response = JSON.parse(response);
+                if(response["right"] && response["left"]){
+                    leaning_chart.data.datasets[0].data = [
+                        response["left"],
+                        response["right"]
+                    ];
+                    leaning_chart.update();
+                }
+                else handleError(response);
+            }
+
+            function handleError(response=""){
+
+            }
+            function keepCentered(){
+                var container_height = parseInt($("#container").css("height").replace("px", ""));
+                var container_width = parseInt($("#container").css("width").replace("px", ""));
+                $("#container").css(
+                    "top",
+                    (window.innerHeight-container_height)/2
+                );
+                $("#container").css(
+                    "left",
+                    (window.innerWidth - container_width)/2
+                );
+            }
+        </script>
+    </body>
+</html>
