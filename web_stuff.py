@@ -1,4 +1,8 @@
 import classifier
+try:
+    from tools import scrapers
+except:
+    from .tools import scrapers
 from flask import Flask, request, abort, render_template
 import json
 
@@ -19,9 +23,9 @@ def handle_input():
         return json.dumps(predict(statement))
     else:
         return abort(400, "Did not receive a statement")
-        
 
-    
+
+
 def predict(statement_to_predict):
     predictions = classifier.classif_pipe.predict_proba([statement_to_predict])
     result = {
@@ -29,5 +33,9 @@ def predict(statement_to_predict):
         "right":predictions[0][1]
     }
     return result
-    
 
+def predictFBUser(fb_username):
+    posts = scrapers.getFbPostsFrom(fb_username)
+    if len(posts)> 0:
+        predictions = classifier.predictListOfStatements(classifier.classif_pipe, posts)
+        return predictions

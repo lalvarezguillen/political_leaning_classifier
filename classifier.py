@@ -151,7 +151,7 @@ def show_most_informative_features(n=30):
         print "\t%.4f\t%-15s\t\t%.4f\t%-15s" % (coef_1, fn_1, coef_2, fn_2)
 
 
-# if classifier_config.pickled_classifier: #If we're using a stored classifier
-#     classif_pipe = joblib.load(classifier_config.pickled_classifier)
-# else: #If we're creating/using a new classifier
-#     classif_pipe = trainClassifier()
+if classifier_config.pickled_classifier: #If we're using a stored classifier
+    classif_pipe = joblib.load(classifier_config.pickled_classifier)
+else: #If we're creating/using a new classifier
+    classif_pipe = trainClassifier()
