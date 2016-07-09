@@ -45,7 +45,7 @@
                 statement = $("#statement textarea")[0].value;
                 console.log("Predicting this: " + statement);
                 $.ajax({
-                    url:"http://pybernie.rmotr.com:8080/",
+                    url:"http://pybernie.rmotr.com:8080/predict",
                     type: "POST",
                     contentType: 'application/json',
                     data: JSON.stringify({
